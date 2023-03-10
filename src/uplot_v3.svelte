@@ -78,8 +78,8 @@
             if (e.buttons==1) {
                 autox = false;
                 autoy = false;
-                console.log(e)
-                console.log('mousemove button', e.button, 'buttons', e.buttons);
+                // console.log(e)
+                // console.log('mousemove button', e.button, 'buttons', e.buttons);
             }
             handler(e)
         }

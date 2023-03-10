@@ -9,7 +9,6 @@
  *
  * Modified for use by SaeWoo
  *   Fixed a bug in the wheel zoom for the Y-axis only..
- *   Still a bug in the wheel zoom... the y-axis only zooms out, won't zoom in
  */
 
 let shift_key = false;
@@ -131,17 +130,22 @@ function wheelZoomPlugin(opts) {
                     
                     let factor_x = shift_key ? 1.0 : factor;
                     let factor_y = ctrl_key ? 1.0 : factor;
-                    console.log('deltaX', e.deltaX, 'deltaY', e.deltaY);
+                    // console.log('deltaX', e.deltaX, 'deltaY', e.deltaY);
                     let nxRange = e.deltaY < 0 ? oxRange * factor_x : oxRange / factor_x;
                     let nxMin = xVal - leftPct * nxRange;
                     let nxMax = nxMin + nxRange;
                     //[nxMin, nxMax] = clamp(nxRange, nxMin, nxMax, xRange, xMin, xMax);
-
-                    let nyRange = e.deltaX < 0 ? oyRange * factor_y : oyRange / factor_y;
+                    // console.log(shift_key, ctrl_key);
+                    let nyRange;
+                    if (shift_key) { // press shift key to only zoom y
+                        nyRange = e.deltaX < 0 ? oyRange * factor_y : oyRange / factor_y;
+                    } else {  // zoom y if no shift key is pressed and just wheel
+                        nyRange = e.deltaY < 0 ? oyRange * factor_y : oyRange / factor_y;
+                    }
                     let nyMin = yVal - btmPct * nyRange;
                     let nyMax = nyMin + nyRange;
-                    console.log('factor', factor_x, factor_y);
-                    console.log('range', nxRange, nyRange);
+                    // console.log('factor', factor_x, factor_y);
+                    // console.log('range', nxRange, nyRange);
                     //[nyMin, nyMax] = clamp(nyRange, nyMin, nyMax, yRange, yMin, yMax);
 
                     u.batch(() => {
