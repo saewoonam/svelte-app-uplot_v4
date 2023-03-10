@@ -1,7 +1,15 @@
 /*
+ * Originally from 
+ * https://github.com/dukelec/cdbus_gui/tree/master/html
+ *
  * Software License Agreement (MIT License)
  *
  * Author: Duke Fong <d@d-l.io>
+ *
+ *
+ * Modified for use by SaeWoo
+ *   Fixed a bug in the wheel zoom for the Y-axis only..
+ *   Still a bug in the wheel zoom... the y-axis only zooms out, won't zoom in
  */
 
 let shift_key = false;
