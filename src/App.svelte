@@ -3,6 +3,7 @@
     import Table from "./simple_table.svelte";
     import {get_sensor_list, load_calibrations, read_sensor} from "./load_cal.js";
     import MyCollapse from "./MyCollapse.svelte";
+    import {merge_data} from "./merge.js";
     let data = [
         [1546300800, 1546387200],    // x-values (timestamps)
         [        35,         15],    // y-values (series 1)
@@ -17,6 +18,10 @@
     */ 
     import { onMount, afterUpdate } from 'svelte';
     import {linear} from 'everpolate';
+    import * as lttb from 'downsample-lttb';
+    const downsample = lttb.default.processData;
+    var dummyDataSeries = [[1,2],[2,2],[3,3],[4,3],[5,6],[6,3],[7,3],[8,5],[9,4],[10,4],[11,1],[12,2]];
+    console.log(downsample(dummyDataSeries, 3));
     // var data;
     var loading_id = -1;
     var last_ts = 0;
@@ -24,10 +29,12 @@
     var labels;
     let host = '132.163.53.82:3200';
     // let ids = [100];
-    let ids = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
-    // let ids = [4, 5, 6, 7];
+    // let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
+    // let ids = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
+    // let ids = [4, 100, 101];
+    let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     var cals;
-    var diode_list;
+    var diode_list, compressor_list, sensor_list;
     var plot_ids;
     var sensor_names;
     onMount( async() => {
@@ -36,43 +43,79 @@
         let url = `http://${host}/database/log.db/diode_list`;
         diode_list = (await get_sensor_list(url))['data'];
         console.log('after get', diode_list);
-        var history;
+        url = `http://${host}/database/log.db/compressor_list`;
+        compressor_list = (await get_sensor_list(url))['data'];
+        console.log('after get', compressor_list);
+        sensor_list = [...diode_list, ... compressor_list];
+        console.log(sensor_list);
         let start_ts = -3*86000;
-        let sensor_data = await read_sensor(host, ids[0], start_ts);
+        var history_v2 = [];
 
-        history = [
-            sensor_data.map(x=>x[0])
-        ];
-        console.log('timestamps', history);
         labels=['TIME'];        
+
+        function timeoutAfter(seconds) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    reject(new Error("request timed-out"));
+                }, seconds * 1000);
+            });
+        }
 
         for (const id of ids) { 
             loading_id = id;
-            let sensor_data = await read_sensor(host, id, start_ts);
-            let sensor_info = diode_list.find(elt => elt[0]==id);
+            var sensor_data;
+            var keep_fetching = true;
+            while (keep_fetching) {
+                try {
+                    // console.log('fetching', id);
+                    sensor_data = await read_sensor(host, id, start_ts);
+                    // console.log('done fetching', id);
+                    // console.log(sensor_data)
+                    keep_fetching = false;
+                } catch (error) {
+                    console.log('some kind of error keep fetching', error);
+                }
+            }
+            let sensor_info = sensor_list.find(elt => elt[0]==id);
             console.log('find id',id, sensor_info[3]);
-            history.push( cals[sensor_info[3]](sensor_data.map(x=>x[2])) );
             labels.push(sensor_info[1]);
+            var points = sensor_data.map(x=>[x[0], 
+                cals[sensor_info[3]](x[2])]);
+
+            var trace = [
+                sensor_data.map(x=>x[0]),
+                cals[sensor_info[3]](sensor_data.map(x=>x[2])) 
+            ];
+            var trace_small = downsample(points, 100);
+            trace = [trace_small.map(x=>x[0]), trace_small.map(x=>x[1])]
+            // console.log('after', trace_small.length, trace_small[0].length);
+            if (history_v2.length==0) {
+                // console.log('start history_v2');
+                history_v2 = trace;
+            } else {
+                // console.log('merge history_v2');
+                history_v2 = merge_data(history_v2, trace);
+            }
         }
         plot_ids = [...labels];
         plot_ids.shift();
         sensor_names = [...plot_ids];
         console.log('labels', labels);
-        console.log(history);
+        console.log('v2', history_v2);
         data_ready = true;
 
-        last_ts = history[0][history[0].length-1];
+        last_ts = history_v2[0][history_v2[0].length-1];
         console.log('latest ts',last_ts);
-        data = history;
+        data = history_v2;
         console.log('data', data);
 
     });
     var table_data;
     $: { 
-        console.log(plot_ids);
+        console.log('plot_ids', plot_ids);
         if (plot_ids !== undefined) {
             for (const label of plot_ids) {
-                let id_list = diode_list.find(elt => elt[1]==label)
+                let id_list = sensor_list.find(elt => elt[1]==label)
                 console.log(id_list);
             }
         }
@@ -88,10 +131,16 @@
                 let new_data = [];
                 // new_data = [];
                 for (const id of ids) {
-                    // fetch all data since last_ts that was plotted
-                    let url = `http://132.163.53.82:3200/database/log.db/data?id=${id}&start=${last_ts+1}`;
-                    // console.log('url', url);
-                    var json = await fetch(url).then(response => response.json()).then(res=>res['data']);
+                    var got_nothing = true;
+                    while (got_nothing) {
+                        // fetch all data since last_ts that was plotted
+                        let url = `http://132.163.53.82:3200/database/log.db/data?id=${id}&start=${last_ts+1}`;
+                        // console.log('url', url);
+                        var json = await fetch(url).then(response => response.json())
+                        json = json['data'];
+                        // console.log('json', json);
+                        got_nothing = json.length==0;
+                    } 
                     console.log(id, json, last_ts);
 
                     // only add one timestamp of data even if there is more
@@ -101,7 +150,7 @@
                         new_data.push(new_ts);
                     }
                     if (json.length>0) {
-                        let sensor_info = diode_list.find(elt => elt[0]==id);
+                        let sensor_info = sensor_list.find(elt => elt[0]==id);
                         new_data.push(cals[sensor_info[3]](json[0][2]));
                     }
                 }
@@ -115,7 +164,7 @@
                 // table_data = new_data; 
                 table_data = new_data.map(
                     // (x,i)=>  (i>0) ? x[0].toFixed(2) : (new Date(x.toFixed(0)*1000)).toLocaleString()
-                    (x,i)=>  (i>0) ? x[0].toFixed(2): (new Date(x.toFixed(0)*1000)).toLocaleString()
+                    (x,i)=>  (i>0) ? (Array.isArray(x) ? x[0].toFixed(2): x.toFixed(2)): (new Date(x.toFixed(0)*1000)).toLocaleString()
                 );
                 console.log('table_data', table_data); 
                 // console.log('data size', data.length, data[0].length);

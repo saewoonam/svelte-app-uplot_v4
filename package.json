@@ -20,6 +20,7 @@
     "uplot": "latest"
   },
   "dependencies": {
+    "downsample-lttb": "^0.0.1",
     "everpolate": "^0.0.3",
     "sirv-cli": "^1.0.0",
     "svelte-collapse": "^0.1.1"

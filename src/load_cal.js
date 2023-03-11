@@ -25,6 +25,7 @@ export async function load_calibrations(host) {
     var cal = {
         'DC2018': await build_cal('DC2018'),
         'DT670': await build_cal('DT670'),
+        'None': none,
         'none': none};
     return cal 
 }
@@ -36,10 +37,33 @@ export async function get_sensor_list(url) {
     return list;
 }
 
+function timeoutAfter(seconds) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error("request timed-out"));
+    }, seconds * 1000);
+  });
+}
+
 export async function read_sensor(host, id, start_ts=0) {
     let url = `http://${host}/database/log.db/data?id=${id}&start=${start_ts}`;
-    var response = await fetch(url); 
-    var json = await response.json(); 
-    return json['data']
+    // var response = await fetch(url); 
+    // var json = await response.json(); 
+    try {
+        // console.log('start race');
+        console.time('race');
+        var response = await Promise.race(
+            [fetch(url), timeoutAfter(2)]
+        ); 
+        //console.log('end race');
+        console.timeEnd('race');
+        var json = await response.json(); 
+        return json['data']
+    } catch (error) {
+        console.log('read_sensor error');
+        console.log(error.message);
+        console.timeEnd('race');
+        return [];
+    }
 }
 
