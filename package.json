@@ -22,6 +22,8 @@
   "dependencies": {
     "downsample-lttb": "^0.0.1",
     "everpolate": "^0.0.3",
+    "got": "^12.6.0",
+    "ky": "^0.33.2",
     "sirv-cli": "^1.0.0",
     "svelte-collapse": "^0.1.1"
   }

@@ -1,7 +1,7 @@
 <script>
     import Uplot from "./uplot_v3.svelte";
     import Table from "./simple_table.svelte";
-    import {get_sensor_list, load_calibrations, read_sensor} from "./load_cal.js";
+    import {fetch_ids, Timeout, get_sensor_list, load_calibrations, read_sensor} from "./load_cal.js";
     import MyCollapse from "./MyCollapse.svelte";
     import {merge_data} from "./merge.js";
     let data = [
@@ -19,9 +19,18 @@
     import { onMount, afterUpdate } from 'svelte';
     import {linear} from 'everpolate';
     import * as lttb from 'downsample-lttb';
+    import ky from 'ky';
+    console.log(ky);
+    
+    // const module = import('got');
+    // import * as got from 'got';
+    // console.log('got');
     const downsample = lttb.default.processData;
+    /*
+    // test that lttb is working
     var dummyDataSeries = [[1,2],[2,2],[3,3],[4,3],[5,6],[6,3],[7,3],[8,5],[9,4],[10,4],[11,1],[12,2]];
     console.log(downsample(dummyDataSeries, 3));
+    */
     // var data;
     var loading_id = -1;
     var last_ts = 0;
@@ -31,13 +40,15 @@
     // let ids = [100];
     // let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
-    // let ids = [4, 100, 101];
+    // let ids = [4, 5, 6, 7 ];
     let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     var cals;
     var diode_list, compressor_list, sensor_list;
     var plot_ids;
     var sensor_names;
     onMount( async() => {
+        var ky_test = await ky('http://132.163.53.82:3200/database/log.db/compressor_list').json()
+        console.log(ky_test);
         cals = await load_calibrations(host);
         console.log('cals', cals, cals['DC2018'](0.5), cals['DT670'](0.5));
         let url = `http://${host}/database/log.db/diode_list`;
@@ -48,19 +59,57 @@
         console.log('after get', compressor_list);
         sensor_list = [...diode_list, ... compressor_list];
         console.log(sensor_list);
-        let start_ts = -3*86000;
+        let stop_ts = Math.floor(Date.now()/1000)
+        var start_ts = stop_ts - 7*86000;
+        start_ts = 0
         var history_v2 = [];
 
         labels=['TIME'];        
 
-        function timeoutAfter(seconds) {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    reject(new Error("request timed-out"));
-                }, seconds * 1000);
-            });
+        var responses = await fetch_ids(host, ids, start_ts, stop_ts);
+        for (const response of responses) {
+            console.log('process response');
+            /* 
+            let timeout = new Timeout();
+            console.time('json');
+            var sensor_data = await timeout
+                .wrap(response.json(), 2000, { reason: 'json timeout' })
+                .then( async data => {return data['data']})
+                .catch( (data)=> {console.log('catch json timeout', data.reason); })
+                .finally ( ()=> {
+                    timeout.clear(...timeout.ids);
+                    console.timeEnd('json');
+                });
+            */
+            // let sensor_data = (await response.json())['data'];
+            
+            var sensor_data = response['data'];
+            console.log('sensor_data length', sensor_data.length);
+            let id = sensor_data[0][1];
+            loading_id = id;
+            let sensor_info = sensor_list.find(elt => elt[0]==id);
+            console.log('find id',id, sensor_info[3]);
+            labels.push(sensor_info[1]);
+            var points = sensor_data.map(x=>[x[0], 
+                cals[sensor_info[3]](x[2])]);
+            /*
+            var trace = [
+                sensor_data.map(x=>x[0]),
+                cals[sensor_info[3]](sensor_data.map(x=>x[2])) 
+            ];
+            */
+            var trace_small = downsample(points, 100);
+            var trace = [trace_small.map(x=>x[0]), trace_small.map(x=>x[1])]
+            if (history_v2.length==0) {
+                // console.log('start history_v2');
+                history_v2 = trace;
+            } else {
+                // console.log('merge history_v2');
+                history_v2 = merge_data(history_v2, trace);
+            }
+            console.log('end process response');
         }
-
+        /*
         for (const id of ids) { 
             loading_id = id;
             var sensor_data;
@@ -97,6 +146,7 @@
                 history_v2 = merge_data(history_v2, trace);
             }
         }
+        */
         plot_ids = [...labels];
         plot_ids.shift();
         sensor_names = [...plot_ids];
@@ -108,6 +158,7 @@
         console.log('latest ts',last_ts);
         data = history_v2;
         console.log('data', data);
+        setInterval( append, 10000);
 
     });
     var table_data;
@@ -120,13 +171,16 @@
             }
         }
     }
+    var appending = false;
     async function append() {
         var catchup = true;
-        while (catchup) {
+        while (catchup & (appending==false) ) {
+            console.log('on catchup appending', appending);
+            appending = true;
             if (last_ts>0) {
-                catchup = false;
+                // catchup = false;
                 // let ids = [100, 108];
-                // console.log('append, last_ts: ', last_ts);
+                console.log('append, last_ts: ', last_ts);
                 let new_ts = 0;
                 let new_data = [];
                 // new_data = [];
@@ -142,6 +196,7 @@
                         got_nothing = json.length==0;
                     } 
                     console.log(id, json, last_ts);
+                    if (json.length==1) catchup = false;
 
                     // only add one timestamp of data even if there is more
                     if ((json.length>0) & (new_ts==0)) {
@@ -169,9 +224,11 @@
                 console.log('table_data', table_data); 
                 // console.log('data size', data.length, data[0].length);
             } 
+            appending = false;
         }
+
     }
-    setInterval( append, 10000);
+    // setInterval( append, 10000);
      
     /* function append() { */
     /*     data_ready = true; */
