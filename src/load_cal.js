@@ -35,7 +35,7 @@ export async function load_calibrations(host) {
 export async function get_sensor_list(url) {
     var list = await fetch(url);
     list = await list.json();
-    console.log('diode_list', list); 
+    // console.log('diode_list', list); 
     return list;
 }
 

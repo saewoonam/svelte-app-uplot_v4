@@ -47,6 +47,7 @@
     var diode_list, compressor_list, sensor_list;
     var plot_ids;
     var sensor_names;
+    var table_data;
     onMount( async() => {
         var ky_test = await ky('http://132.163.53.82:3200/database/log.db/compressor_list').json()
         console.log(ky_test);
@@ -54,12 +55,12 @@
         console.log('cals', cals, cals['DC2018'](0.5), cals['DT670'](0.5));
         let url = `http://${host}/database/log.db/diode_list`;
         diode_list = (await get_sensor_list(url))['data'];
-        console.log('after get', diode_list);
+        console.log('after get diode_list', diode_list);
         url = `http://${host}/database/log.db/compressor_list`;
         compressor_list = (await get_sensor_list(url))['data'];
-        console.log('after get', compressor_list);
+        console.log('after get compressor_list', compressor_list);
         sensor_list = [...diode_list, ... compressor_list];
-        console.log(sensor_list);
+        console.log('full sensor_list', sensor_list);
         let stop_ts = Math.floor(Date.now()/1000)
         var start_ts = stop_ts - 7*86000;
         start_ts = 0
@@ -71,6 +72,8 @@
         for (const response of responses) {
             console.log('process response');
             /* 
+            // Code to timeout if json conversion fails.
+
             let timeout = new Timeout();
             console.time('json');
             var sensor_data = await timeout
@@ -91,16 +94,19 @@
             let sensor_info = sensor_list.find(elt => elt[0]==id);
             console.log('find id',id, sensor_info[3]);
             labels.push(sensor_info[1]);
-            var points = sensor_data.map(x=>[x[0], 
-                cals[sensor_info[3]](x[2])]);
-            /*
-            var trace = [
-                sensor_data.map(x=>x[0]),
-                cals[sensor_info[3]](sensor_data.map(x=>x[2])) 
-            ];
-            */
-            var trace_small = downsample(points, 100);
-            var trace = [trace_small.map(x=>x[0]), trace_small.map(x=>x[1])]
+            var trace; 
+            let use_lttb = true;
+            if (use_lttb) { 
+                var points = sensor_data.map(x=>[x[0], 
+                    cals[sensor_info[3]](x[2])]);
+                var trace_small = downsample(points, 1000);
+                trace = [trace_small.map(x=>x[0]), trace_small.map(x=>x[1])]
+            } else {  
+                trace = [
+                    sensor_data.map(x=>x[0]),
+                    cals[sensor_info[3]](sensor_data.map(x=>x[2])) 
+                ];
+            } 
             if (history_v2.length==0) {
                 // console.log('start history_v2');
                 history_v2 = trace;
@@ -110,44 +116,7 @@
             }
             console.log('end process response');
         }
-        /*
-        for (const id of ids) { 
-            loading_id = id;
-            var sensor_data;
-            var keep_fetching = true;
-            while (keep_fetching) {
-                try {
-                    // console.log('fetching', id);
-                    sensor_data = await read_sensor(host, id, start_ts);
-                    // console.log('done fetching', id);
-                    // console.log(sensor_data)
-                    keep_fetching = false;
-                } catch (error) {
-                    console.log('some kind of error keep fetching', error);
-                }
-            }
-            let sensor_info = sensor_list.find(elt => elt[0]==id);
-            console.log('find id',id, sensor_info[3]);
-            labels.push(sensor_info[1]);
-            var points = sensor_data.map(x=>[x[0], 
-                cals[sensor_info[3]](x[2])]);
 
-            var trace = [
-                sensor_data.map(x=>x[0]),
-                cals[sensor_info[3]](sensor_data.map(x=>x[2])) 
-            ];
-            var trace_small = downsample(points, 100);
-            trace = [trace_small.map(x=>x[0]), trace_small.map(x=>x[1])]
-            // console.log('after', trace_small.length, trace_small[0].length);
-            if (history_v2.length==0) {
-                // console.log('start history_v2');
-                history_v2 = trace;
-            } else {
-                // console.log('merge history_v2');
-                history_v2 = merge_data(history_v2, trace);
-            }
-        }
-        */
         plot_ids = [...labels];
         plot_ids.shift();
         sensor_names = [...plot_ids];
@@ -159,16 +128,20 @@
         console.log('latest ts',last_ts);
         data = history_v2;
         console.log('data', data);
+        var last_data = history_v2.map(x=>x[x.length-1]);
+        console.log('last_data', last_data);
+        table_data = last_data.map(
+            (x,i)=>  (i>0) ? (Array.isArray(x) ? x[0].toFixed(2): x.toFixed(2)): (new Date(x.toFixed(0)*1000)).toLocaleString()
+        );
         setInterval( append, 10000);
 
     });
-    var table_data;
     $: { 
         console.log('plot_ids', plot_ids);
         if (plot_ids !== undefined) {
             for (const label of plot_ids) {
                 let id_list = sensor_list.find(elt => elt[1]==label)
-                console.log(id_list);
+                // console.log(id_list);
             }
         }
     }
@@ -179,12 +152,39 @@
             console.log('on catchup appending', appending);
             appending = true;
             if (last_ts>0) {
-                // catchup = false;
-                // let ids = [100, 108];
                 console.log('append, last_ts: ', last_ts);
                 let new_ts = 0;
                 let new_data = [];
-                // new_data = [];
+                let bulk_url = `http://132.163.53.82:3200/database/log.db/data?start=${last_ts+1}`;
+                var bulk_json = await fetch(bulk_url).then(response => response.json())
+                bulk_json = bulk_json['data'];
+                var bulk_ts = Array.from(new Set(bulk_json.map(x=>x[0])));
+                console.log('bulk download', bulk_json.length, bulk_ts);
+                for (const ts of bulk_ts) {
+                    var one_ts = bulk_json.filter(x => x[0]==ts);
+                    last_ts = ts;
+                    // console.log(ts, one_ts);
+                    if(ids.every(x => one_ts.map(x=>x[1]).includes(x))) {
+                        new_data = [ts];
+                        for (const id of ids) {
+                            let sensor_info = sensor_list.find(elt => elt[0]==id);
+                            var reading = one_ts.filter(x => x[1] == id);
+                            reading = reading[0][2];
+                            // console.log(id, reading);
+                            reading = Array.isArray(reading) ? reading[0]: reading;
+                            var converted = cals[sensor_info[3]](reading);
+                            converted = Array.isArray(converted) ? converted[0]: converted;
+                            new_data.push(converted);
+                        }
+                        console.log('bulk new_data', new_data);
+                    }
+                    for(var i=0; i<new_data.length; i++) {
+                        data[i].push(new_data[i])
+                    }
+                }
+                /*
+                // request data for each id separately instead of bulk (above)
+                new_data = [];
                 for (const id of ids) {
                     var got_nothing = true;
                     while (got_nothing) {
@@ -216,6 +216,7 @@
                 for(var i=0; i<new_data.length; i++) {
                     data[i].push(new_data[i])
                 }
+                */
                 data=data;
                 // table_data = new_data; 
                 table_data = new_data.map(
@@ -226,6 +227,7 @@
                 // console.log('data size', data.length, data[0].length);
             } 
             appending = false;
+            catchup = false;
         }
 
     }
