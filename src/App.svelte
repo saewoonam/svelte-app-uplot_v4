@@ -4,6 +4,7 @@
     import {fetch_ids, Timeout, get_sensor_list, load_calibrations, read_sensor} from "./load_cal.js";
     import MyCollapse from "./MyCollapse.svelte";
     import {merge_data} from "./merge.js";
+    import Loader from "./Loader.svelte";
     let data = [
         [1546300800, 1546387200],    // x-values (timestamps)
         [        35,         15],    // y-values (series 1)
@@ -284,7 +285,7 @@
     {#if data_ready}
         <Uplot data={data} labels={labels}/>
     {:else}
-        loading, {loading_id}
+        <Loader loading={!data_ready}/>
     {/if}
 </div>
 
