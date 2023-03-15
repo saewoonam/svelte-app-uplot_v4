@@ -9,13 +9,14 @@
     import LinIcon from './LinIcon.svelte'
     import {bellIcon, download, home, png} from './AppIcons.js'
     import { wheelZoomPlugin, touchZoomPlugin } from './plot_zoom.js';
-    import {tab20} from './js-colormaps-mod.js';
+    import {tab20c} from './js-colormaps-mod.js';
 
     import filesaver from 'file-saver';
     export let data = data_config;
     export let opts = opts_config;
     export let labels = ['y0', 'y1']
-
+    export let colors = ['red', 'blue'];
+    /*
     var colors = []
     function componentToHex(c) {
       var hex = c.toString(16);
@@ -25,12 +26,13 @@
       return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
     }
     for (let counter=0; counter<20; counter++) {
-        let rgb = tab20(counter/20);
+        let rgb = tab20c(counter/20);
         //console.log('rgb', rgb);
         let hex = rgbToHex(...rgb);
         //console.log('hex', hex);
         colors.push(hex);
     }
+    */
     let plotDiv;
     // let uPlot;
     let uplot;

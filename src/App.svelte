@@ -6,8 +6,7 @@
     import {merge_data} from "./merge.js";
     import Loader from "./Loader.svelte";
     import {tab20}  from './js-colormaps-mod.js';
-    console.log('tab20', tab20);
-
+    // calculate colors
     var colors = []
     function componentToHex(c) {
       var hex = c.toString(16);
@@ -304,7 +303,7 @@
 
 <div class="body-text">
     {#if data_ready}
-        <Uplot data={data} labels={labels}/>
+        <Uplot data={data} labels={labels} colors={colors}/>
     {:else}
         <Loader loading={!data_ready}/>
     {/if}
