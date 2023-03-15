@@ -1,18 +1,36 @@
 <script>
     import uPlot from 'uplot';
     import { onMount, afterUpdate } from 'svelte';
-    import {data_config, opts_config, colors} from './uplot_v3_config.js'
+    import {data_config, opts_config} from './uplot_v3_config.js'
+    // import {data_config, opts_config, colors} from './uplot_v3_config.js'
     import {downloadBlob} from './download.js'
     import SvgIcon from './SvgIcon.svelte'
     import LogIcon from './LogIcon.svelte'
     import LinIcon from './LinIcon.svelte'
     import {bellIcon, download, home, png} from './AppIcons.js'
     import { wheelZoomPlugin, touchZoomPlugin } from './plot_zoom.js';
+    import {tab20} from './js-colormaps-mod.js';
 
     import filesaver from 'file-saver';
     export let data = data_config;
     export let opts = opts_config;
     export let labels = ['y0', 'y1']
+
+    var colors = []
+    function componentToHex(c) {
+      var hex = c.toString(16);
+      return hex.length == 1 ? "0" + hex : hex;
+    }
+    function rgbToHex(r, g, b) {
+      return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
+    for (let counter=0; counter<20; counter++) {
+        let rgb = tab20(counter/20);
+        //console.log('rgb', rgb);
+        let hex = rgbToHex(...rgb);
+        //console.log('hex', hex);
+        colors.push(hex);
+    }
     let plotDiv;
     // let uPlot;
     let uplot;
@@ -90,7 +108,9 @@
         s.push({
             spanGaps: true,
             label: "y"+i,
-            stroke: colors[9-i],
+            /* stroke: colors[9-i], */
+            /*stroke: colors[(9-i)%15],*/
+            stroke: colors[i], 
             width: 2
         })
     }

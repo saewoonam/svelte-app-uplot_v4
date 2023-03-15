@@ -1,6 +1,7 @@
 <script>
 	export let table_data = ["today", 1, 2];
 	export let labels = [100, 101];
+    export let colors = ['red', 'blue', 'green'];
 </script>
 <style>
     table {
@@ -23,7 +24,7 @@
 	{#each table_data as reading,i}
 	{#if i>0}
 	<tr>
-		<td> {labels[i]} </td>
+        <td style="color:{colors[(i-1)%colors.length]}"> {labels[i]} </td>
 		<td> {reading} </td>
 	</tr>
 	{/if}

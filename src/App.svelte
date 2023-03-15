@@ -5,6 +5,25 @@
     import MyCollapse from "./MyCollapse.svelte";
     import {merge_data} from "./merge.js";
     import Loader from "./Loader.svelte";
+    import {tab20}  from './js-colormaps-mod.js';
+    console.log('tab20', tab20);
+
+    var colors = []
+    function componentToHex(c) {
+      var hex = c.toString(16);
+      return hex.length == 1 ? "0" + hex : hex;
+    }
+    function rgbToHex(r, g, b) {
+      return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+    }
+    for (let counter=0; counter<20; counter++) {
+        let rgb = tab20(counter/20);
+        //console.log('rgb', rgb);
+        let hex = rgbToHex(...rgb);
+        //console.log('hex', hex);
+        colors.push(hex);
+    }
+
     let data = [
         [1546300800, 1546387200],    // x-values (timestamps)
         [        35,         15],    // y-values (series 1)
@@ -276,7 +295,7 @@
 </style>
 <div class="sidebar">
     {#if data_ready}
-    <Table table_data={table_data} labels={labels}/>
+        <Table table_data={table_data} labels={labels} colors={colors}/>
     <!--
     <MyCollapse label={'plot'} bind:choices={plot_ids} menu={sensor_names}/>
     -->
