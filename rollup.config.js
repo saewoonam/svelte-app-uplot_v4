@@ -56,12 +56,7 @@ export default {
 			browser: true,
 			dedupe: ['svelte']
 		}),
-		commonjs({
-            dynamicRequireTargets: [
-                'node_modules/js-colormaps/*.js',
-
-            ]
-        }),
+		commonjs(),
 
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
