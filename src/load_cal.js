@@ -27,6 +27,9 @@ export async function load_calibrations(host) {
     var cal = {
         'DC2018': await build_cal('DC2018'),
         'DT670': await build_cal('DT670'),
+        'RO600': await build_cal('RO600'),
+        'RuO2Mean': await build_cal('RuO2Mean'),
+        'ROX6951': await build_cal('ROX6951'),
         'None': none,
         'none': none};
     return cal 

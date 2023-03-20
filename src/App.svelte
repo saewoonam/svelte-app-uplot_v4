@@ -15,8 +15,8 @@
     function rgbToHex(r, g, b) {
       return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
     }
-    for (let counter=0; counter<20; counter++) {
-        let rgb = tab20(counter/20);
+    for (let counter=0; counter<30; counter++) {
+        let rgb = tab20(counter/30);
         //console.log('rgb', rgb);
         let hex = rgbToHex(...rgb);
         //console.log('hex', hex);
@@ -60,7 +60,7 @@
     // let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [4, 5, 6, 7 ];
-    let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201];
+    let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 204, 205, 208, 209, 212, 213, 216, 217, 218, 219, 220];
     var cals;
     var diode_list, compressor_list, heaters_list, sensor_list;
     var plot_ids;
@@ -71,6 +71,8 @@
         console.log(ky_test);
         cals = await load_calibrations(host);
         console.log('cals', cals, cals['DC2018'](0.5), cals['DT670'](0.5));
+        console.log('cals RuOx', 
+            cals['RuO2Mean'](1000), cals['RO600'](1000), cals['ROX6951'](1000));
         let url = `http://${host}/database/log.db/diode_list`;
         diode_list = (await get_sensor_list(url))['data'];
         console.log('after get diode_list', diode_list);
@@ -277,18 +279,19 @@
 <style>
 
     .sidebar {
-        height: 200px;
+        height: 900px;
         width: 250px;
         position: fixed;
         top: 0;
         left: 0;
         padding-top: 40px;
+        font-size: 12px;
         /* background-color: lightblue; */
     }
 
     .sidebar div {
         padding: 8px;
-        font-size: 16px;
+        font-size: 12px;
         display: block;
     }
     .body-text {

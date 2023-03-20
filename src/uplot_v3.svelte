@@ -283,6 +283,20 @@ button {
         <button on:click={downloadData}>
             <SvgIcon d={download} />
         </button>
+        <table>
+            <tr>
+                <td>
+                    zoom x and y: mousewheel
+                </td>
+                <td>
+                    zoom x only: ctrl + mousewheel
+                </td>
+                <td>
+                    zoom y only: shift + mousewheel
+                </td>
+            </tr>
+        </table>
+
     </div>
     <div bind:this={plotDiv}></div>
 
