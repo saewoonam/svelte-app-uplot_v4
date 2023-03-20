@@ -60,6 +60,7 @@
     // let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [4, 5, 6, 7 ];
+    // let ids = [4, 100, 200, 300, 301];
     let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 204, 205, 208, 209, 212, 213, 216, 217, 218, 219, 220, 300, 301];
     var cals;
     var diode_list, compressor_list, heaters_list, lockins_list, sensor_list;
@@ -91,7 +92,7 @@
         console.log('full sensor_list', sensor_list);
         let stop_ts = Math.floor(Date.now()/1000)
         var start_ts = stop_ts - 7*86000;
-        start_ts = 0
+        // start_ts = 0
         var history_v2 = [];
 
         labels=['TIME'];        
@@ -158,9 +159,12 @@
         console.log('data', data);
         var last_data = history_v2.map(x=>x[x.length-1]);
         console.log('last_data', last_data);
+        last_data = last_data.map( (x,i) => Array.isArray(x) ? Number(x[0].toFixed(2)): Number(x.toFixed(2)))
+        console.log('last_data', last_data);
         table_data = last_data.map(
             (x,i)=>  (i>0) ? (Array.isArray(x) ? x[0].toFixed(2): x.toFixed(2)): (new Date(x.toFixed(0)*1000)).toLocaleString()
         );
+        
         setInterval( append, 10000);
 
     });
