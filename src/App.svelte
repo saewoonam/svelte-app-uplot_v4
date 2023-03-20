@@ -60,9 +60,9 @@
     // let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [4, 5, 6, 7 ];
-    let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 204, 205, 208, 209, 212, 213, 216, 217, 218, 219, 220];
+    let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 204, 205, 208, 209, 212, 213, 216, 217, 218, 219, 220, 300, 301];
     var cals;
-    var diode_list, compressor_list, heaters_list, sensor_list;
+    var diode_list, compressor_list, heaters_list, lockins_list, sensor_list;
     var plot_ids;
     var sensor_names;
     var table_data;
@@ -84,6 +84,10 @@
         heaters_list = (await get_sensor_list(url))['data'];
         console.log('after get heaters_list', heaters_list);
         sensor_list = [...sensor_list, ...heaters_list];
+        url = `http://${host}/database/log.db/lockins_list`;
+        lockins_list = (await get_sensor_list(url))['data'];
+        console.log('after get lockins_list', lockins_list);
+        sensor_list = [...sensor_list, ...lockins_list];
         console.log('full sensor_list', sensor_list);
         let stop_ts = Math.floor(Date.now()/1000)
         var start_ts = stop_ts - 7*86000;
