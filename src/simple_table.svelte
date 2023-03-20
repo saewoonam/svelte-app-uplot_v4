@@ -12,6 +12,9 @@
         text-align: center;
         border: 1px solid;
     }
+    table thead {border: 1px solid; display: block;}
+    table tbody {height:600px; overflow-y:scroll; display:block;}
+
 </style>
 {#if table_data.length>0}
 {table_data[0]}
@@ -30,4 +33,5 @@
 	{/if}
 	{/each}
 </table>
+
 

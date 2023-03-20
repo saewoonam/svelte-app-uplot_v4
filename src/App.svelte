@@ -253,7 +253,7 @@
                 // table_data = new_data; 
                 table_data = new_data.map(
                     // (x,i)=>  (i>0) ? x[0].toFixed(2) : (new Date(x.toFixed(0)*1000)).toLocaleString()
-                    (x,i)=>  (i>0) ? (Array.isArray(x) ? x[0].toFixed(2): x.toFixed(2)): (new Date(x.toFixed(0)*1000)).toLocaleString()
+                    (x,i)=>  (x == null) ? -1 : ((i>0) ? (Array.isArray(x) ? x[0].toFixed(2): x.toFixed(2)): (new Date(x.toFixed(0)*1000)).toLocaleString())
                 );
                 console.log('table_data', table_data); 
                 // console.log('data size', data.length, data[0].length);
@@ -287,13 +287,14 @@
 <style>
 
     .sidebar {
-        height: 900px;
+        height: 500px;
         width: 250px;
         position: fixed;
         top: 0;
         left: 0;
         padding-top: 40px;
         font-size: 12px;
+        overflow-y: scroll;
         /* background-color: lightblue; */
     }
 
@@ -306,6 +307,9 @@
         margin-left: 250px;
         font-size: 18px;
     }
+    /* table thead {display: block;} */
+    /* table tbody {height:300px; overflow-y:scroll; display:block;} */
+
 </style>
 <div class="sidebar">
     {#if data_ready}
