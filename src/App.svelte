@@ -92,7 +92,7 @@
         console.log('full sensor_list', sensor_list);
         let stop_ts = Math.floor(Date.now()/1000)
         var start_ts = stop_ts - 7*86000;
-        // start_ts = 0
+        start_ts = 0
         var history_v2 = [];
 
         labels=['TIME'];        
@@ -159,7 +159,7 @@
         console.log('data', data);
         var last_data = history_v2.map(x=>x[x.length-1]);
         console.log('last_data', last_data);
-        last_data = last_data.map( (x,i) => Array.isArray(x) ? Number(x[0].toFixed(2)): Number(x.toFixed(2)))
+        last_data = last_data.map( (x,i) => Array.isArray(x) ? Number(x[0].toFixed(2)): ((x==null) ? -1 : Number(x.toFixed(2))))
         console.log('last_data', last_data);
         table_data = last_data.map(
             (x,i)=>  (i>0) ? (Array.isArray(x) ? x[0].toFixed(2): x.toFixed(2)): (new Date(x.toFixed(0)*1000)).toLocaleString()

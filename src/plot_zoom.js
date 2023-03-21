@@ -137,11 +137,15 @@ function wheelZoomPlugin(opts) {
                     //[nxMin, nxMax] = clamp(nxRange, nxMin, nxMax, xRange, xMin, xMax);
                     // console.log(shift_key, ctrl_key);
                     let nyRange;
+                    /*
                     if (shift_key) { // press shift key to only zoom y
                         nyRange = e.deltaX < 0 ? oyRange * factor_y : oyRange / factor_y;
                     } else {  // zoom y if no shift key is pressed and just wheel
                         nyRange = e.deltaY < 0 ? oyRange * factor_y : oyRange / factor_y;
                     }
+                    */
+                    nyRange = e.deltaY < 0 ? oyRange * factor_y : oyRange / factor_y;
+                    if (e.deltaY==0) nyRange = e.deltaX < 0 ? oyRange * factor_y : oyRange / factor_y;
                     let nyMin = yVal - btmPct * nyRange;
                     let nyMax = nyMin + nyRange;
                     // console.log('factor', factor_x, factor_y);
