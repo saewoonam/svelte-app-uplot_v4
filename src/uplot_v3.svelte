@@ -92,19 +92,23 @@
             handler(e)              
         } 
     }
-    
+     
     opts.cursor.bind.mousemove = (u, targ, handler) => {
         return e => {
             if (e.buttons==1) {
                 autox = false;
                 autoy = false;
                 // console.log(e)
-                // console.log('mousemove button', e.button, 'buttons', e.buttons);
+                if (e.shiftKey) {
+                    autox = false;
+                    autoy = false;
+                }
+                console.log('mousemove button', e.button, 'buttons', e.buttons, 'shiftKey', e.shiftKey);
             }
             handler(e)
         }
     }
-    
+     
     let s = [{}]
     for (let i=0; i<data.length-1; i++) {
         s.push({
@@ -152,10 +156,45 @@
     $: {console.log('labels changed into uPlot, label.length', labels.length);}
     */
     afterUpdate( ()=> {
-        // console.log('afterUpdate data[0].length', data[0].length)
+        console.log('afterUpdate data[0].length', data[0].length)
         if (mounted) {
-            if(uplot && autox && autoy) uplot.setData(data);
-            else if (uplot) uplot.setData(data, false);
+            // console.log('scales before', uplot.scales);
+            if(uplot && autox && autoy) { 
+                // console.log('setData with auto');
+                uplot.setData(data);
+            } else if (uplot) {
+                // console.log('setData with no auto');
+                let u = uplot;
+                
+                let scXMin0 = u.scales.x.min;
+                let scXMax0 = u.scales.x.max;
+                let scYMin0 = u.scales.y.min;
+                let scYMax0 = u.scales.y.max;
+                // let box = [scXMin0, scXMax0, scYMin0, scYMax0];
+                // console.log('box before', box);
+
+                //  This doesn't update the plot properly when zoomed in
+                // uplot.setData(data, false);
+                // -----------
+                //  Using "batch" more reliably updates the plot
+                uplot.batch(() => { // updates plot data and scale correctly
+                    // uplot.setData(data); // this auto zooms and so we need the setScale to undo
+                    uplot.setData(data, false); // this does not update as reliably
+
+                    // x doesn't need to be done if using setData with false  
+                    u.setScale("x", {
+                        min: scXMin0,
+                        max: scXMax0,
+                    });
+                    uplot.setScale("y", {
+                        min: scYMin0,
+                        max: scYMax0,
+                    });
+                    
+                });
+                // console.log('box after', box);
+            }
+            //console.log('scales after', uplot.scales);
         }
     })
     function toggle_autox() {

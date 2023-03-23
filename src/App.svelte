@@ -56,10 +56,14 @@
     var data_ready = false;
     var labels;
     let host = '132.163.53.82:3200';
+    var loading_message = 'Loading';
+    let fetchEvent = new Event('fetch');
+
     // let ids = [100];
     // let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109];
     // let ids = [4, 5, 6, 7 ];
+    // let ids = [300, 301];
     // let ids = [4, 100, 200, 300, 301];
     let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 204, 205, 208, 209, 212, 213, 216, 217, 218, 219, 220, 300, 301];
     var cals;
@@ -67,9 +71,17 @@
     var plot_ids;
     var sensor_names;
     var table_data;
+
+    $: { 
+        console.log('change loading_message', loading_message);
+    }
     onMount( async() => {
+        var loading_elt = document.getElementById('message'); 
+        console.log(loading_elt);
+
         var ky_test = await ky('http://132.163.53.82:3200/database/log.db/compressor_list').json()
         console.log(ky_test);
+        loading_message = 'loading calibrations'
         cals = await load_calibrations(host);
         console.log('cals', cals, cals['DC2018'](0.5), cals['DT670'](0.5));
         console.log('cals RuOx', 
@@ -91,13 +103,15 @@
         sensor_list = [...sensor_list, ...lockins_list];
         console.log('full sensor_list', sensor_list);
         let stop_ts = Math.floor(Date.now()/1000)
-        var start_ts = stop_ts - 7*86000;
-        start_ts = 0
+        var start_ts = stop_ts - 1*86000;
+        // start_ts = 0
         var history_v2 = [];
 
         labels=['TIME'];        
+        loading_message = 'loading data'
 
-        var responses = await fetch_ids(host, ids, start_ts, stop_ts);
+        var responses = await fetch_ids(host, ids, loading_elt, start_ts, stop_ts);
+        loading_message = 'process json data'
         for (const response of responses) {
             console.log('process response');
             /* 
@@ -124,7 +138,9 @@
             console.log('find id',id, sensor_info[3]);
             labels.push(sensor_info[1]);
             var trace; 
-            let use_lttb = true;
+            let use_lttb = false;
+            loading_elt.innerHTML = "Processing "+sensor_info[1]
+            console.log('loading_message', loading_message);
             if (use_lttb) { 
                 var points = sensor_data.map(x=>[x[0], 
                     cals[sensor_info[3]](x[2])]);
@@ -249,13 +265,15 @@
                     data[i].push(new_data[i])
                 }
                 */
-                data=data;
+                data = data;
                 // table_data = new_data; 
-                table_data = new_data.map(
-                    // (x,i)=>  (i>0) ? x[0].toFixed(2) : (new Date(x.toFixed(0)*1000)).toLocaleString()
-                    (x,i)=>  (x == null) ? -1 : ((i>0) ? (Array.isArray(x) ? x[0].toFixed(2): x.toFixed(2)): (new Date(x.toFixed(0)*1000)).toLocaleString())
+                if (new_data.length>0) {
+                    table_data = new_data.map(
+                        // (x,i)=>  (i>0) ? x[0].toFixed(2) : (new Date(x.toFixed(0)*1000)).toLocaleString()
+                        (x,i)=>  (x == null) ? -1 : ((i>0) ? (Array.isArray(x) ? x[0].toFixed(2): x.toFixed(2)): (new Date(x.toFixed(0)*1000)).toLocaleString())
                 );
                 console.log('table_data', table_data); 
+                }
                 // console.log('data size', data.length, data[0].length);
             } 
             appending = false;
@@ -324,6 +342,7 @@
     {#if data_ready}
         <Uplot data={data} labels={labels} colors={colors}/>
     {:else}
+        <p id="message">{loading_message} </p>
         <Loader loading={!data_ready}/>
     {/if}
 </div>

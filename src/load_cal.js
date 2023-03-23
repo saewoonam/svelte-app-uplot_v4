@@ -119,12 +119,13 @@ export async function fetch_timeout(url, wait=3000) {
     return dd;
 }
 
-export async function fetch_ids(host, ids, start_ts=0, stop_ts=0, wait=3000) {
+export async function fetch_ids(host, ids, html_elt, start_ts=0, stop_ts=0, wait=3000) {
     console.log('fetch_ids', host, ids, start_ts);
     var responses=[];
     for (const id of ids) {
         // let url = `http://132.163.53.82:3200/database/log.db/data?id=${id}`;
         let url = `http://${host}/database/log.db/data?id=${id}&start=${start_ts}&stop=${stop_ts}`;
+        html_elt.innerHTML = 'loading id: '+id
         // console.log(url);
         var tries = 0;
         var keep_trying = true;

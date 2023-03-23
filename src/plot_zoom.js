@@ -8,7 +8,7 @@
  *
  *
  * Modified for use by SaeWoo
- *   Fixed a bug in the wheel zoom for the Y-axis only..
+ *   Fixed a bug in the wheel zoom.  Some mice alter deltaX on wheel when shift key is pressed 
  */
 
 let shift_key = false;
@@ -63,10 +63,11 @@ function wheelZoomPlugin(opts) {
 
                 let plot = u.root.querySelector(".u-over");
                 //let rect = plot.getBoundingClientRect();
-                
                 // wheel drag pan
                 plot.addEventListener("mousedown", e => {
-                    if (e.button == 0 || e.button == 1) {
+                    console.log('mousedown', u, plot);
+                    //if ((e.button == 0) && (e.shiftKey)) {
+                    if ((e.button == 1)||(e.button==0))  {
                     //    plot.style.cursor = "move";
                         e.preventDefault();
 
