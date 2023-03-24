@@ -246,4 +246,8 @@ module.exports = {
     tab20_r,
     tab20b_r,
     tab20c_r,
+    gnuplot,
+    jet,
+    hsv,
+    nipy_spectral,
 }

@@ -5,7 +5,8 @@
     import MyCollapse from "./MyCollapse.svelte";
     import {merge_data} from "./merge.js";
     import Loader from "./Loader.svelte";
-    import {tab20}  from './js-colormaps-mod.js';
+    import {nipy_spectral}  from './js-colormaps-mod.js';
+    let colormap = nipy_spectral;
     // calculate colors
     var colors = []
     function componentToHex(c) {
@@ -16,7 +17,7 @@
       return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
     }
     for (let counter=0; counter<40; counter++) {
-        let rgb = tab20(counter/40);
+        let rgb = colormap(counter/40);
         //console.log('rgb', rgb);
         let hex = rgbToHex(...rgb);
         //console.log('hex', hex);
