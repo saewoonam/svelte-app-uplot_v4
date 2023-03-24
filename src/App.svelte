@@ -15,8 +15,8 @@
     function rgbToHex(r, g, b) {
       return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
     }
-    for (let counter=0; counter<30; counter++) {
-        let rgb = tab20(counter/30);
+    for (let counter=0; counter<40; counter++) {
+        let rgb = tab20(counter/40);
         //console.log('rgb', rgb);
         let hex = rgbToHex(...rgb);
         //console.log('hex', hex);
@@ -65,7 +65,7 @@
     // let ids = [4, 5, 6, 7 ];
     // let ids = [300, 301];
     // let ids = [4, 100, 200, 300, 301];
-    let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 204, 205, 208, 209, 212, 213, 216, 217, 218, 219, 220, 300, 301];
+    let ids = [4, 5, 6, 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 204, 205, 208, 209, 212, 213, 216, 217, 218, 219, 220, 300, 301, 303, 304, 305, 306];
     var cals;
     var diode_list, compressor_list, heaters_list, lockins_list, sensor_list;
     var plot_ids;
@@ -103,8 +103,8 @@
         sensor_list = [...sensor_list, ...lockins_list];
         console.log('full sensor_list', sensor_list);
         let stop_ts = Math.floor(Date.now()/1000)
-        var start_ts = stop_ts - 1*86000;
-        // start_ts = 0
+        var start_ts = stop_ts - 3*86000;
+        //start_ts = 0
         var history_v2 = [];
 
         labels=['TIME'];        
@@ -138,13 +138,13 @@
             console.log('find id',id, sensor_info[3]);
             labels.push(sensor_info[1]);
             var trace; 
-            let use_lttb = false;
+            let use_lttb = true;
             loading_elt.innerHTML = "Processing "+sensor_info[1]
             console.log('loading_message', loading_message);
             if (use_lttb) { 
                 var points = sensor_data.map(x=>[x[0], 
                     cals[sensor_info[3]](x[2])]);
-                var trace_small = downsample(points, 1000);
+                var trace_small = downsample(points, 2000);
                 trace = [trace_small.map(x=>x[0]), trace_small.map(x=>x[1])]
             } else {  
                 trace = [
@@ -195,9 +195,10 @@
     }
     var appending = false;
     async function append() {
-        var catchup = true;
-        while (catchup & (appending==false) ) {
-            console.log('on catchup appending', appending);
+        // var catchup = true;
+        // while (catchup & (appending==false) ) {
+        if (true) {
+            // console.log('on catchup appending', appending);
             appending = true;
             if (last_ts>0) {
                 console.log('append, last_ts: ', last_ts);
@@ -230,41 +231,6 @@
                         data[i].push(new_data[i])
                     }
                 }
-                /*
-                // request data for each id separately instead of bulk (above)
-                new_data = [];
-                for (const id of ids) {
-                    var got_nothing = true;
-                    while (got_nothing) {
-                        // fetch all data since last_ts that was plotted
-                        let url = `http://132.163.53.82:3200/database/log.db/data?id=${id}&start=${last_ts+1}`;
-                        // console.log('url', url);
-                        var json = await fetch(url).then(response => response.json())
-                        json = json['data'];
-                        // console.log('json', json);
-                        got_nothing = json.length==0;
-                    } 
-                    console.log(id, json, last_ts);
-                    if (json.length==1) catchup = false;
-
-                    // only add one timestamp of data even if there is more
-                    if ((json.length>0) & (new_ts==0)) {
-                        new_ts = json[0][0];
-                        console.log('new_ts to add', json[0][0]);
-                        new_data.push(new_ts);
-                    }
-                    if (json.length>0) {
-                        let sensor_info = sensor_list.find(elt => elt[0]==id);
-                        new_data.push(cals[sensor_info[3]](json[0][2]));
-                    }
-                }
-                if (new_ts>0) last_ts = new_ts;
-                console.log('new_data', new_data);
-
-                for(var i=0; i<new_data.length; i++) {
-                    data[i].push(new_data[i])
-                }
-                */
                 data = data;
                 // table_data = new_data; 
                 if (new_data.length>0) {
@@ -276,8 +242,8 @@
                 }
                 // console.log('data size', data.length, data[0].length);
             } 
-            appending = false;
-            catchup = false;
+            // appending = false;
+            // catchup = false;
         }
 
     }
